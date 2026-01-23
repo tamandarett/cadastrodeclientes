@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
     <meta name="robots" content="noindex, nofollow">
     
     <meta property="og:title" content="Cadastro e Retirada - Tamandaré Tintas">
@@ -30,6 +31,10 @@
         .required-asterisk { color: red; font-weight: bold; }
         .logo-header { max-height: 80px; width: auto; }
         .hidden { display: none !important; }
+        
+        /* ESTILO DA TELA DE SUCESSO */
+        #telaSucesso { text-align: center; padding: 40px 20px; }
+        .check-icon { font-size: 80px; color: #198754; margin-bottom: 20px; }
     </style>
 </head>
 <body>
@@ -38,7 +43,21 @@
         <div class="card card-form p-4 p-md-5">
             <div class="text-center mb-4">
                 <img src="logo.png" alt="Tamandaré Tintas" class="img-fluid mb-3 logo-header">
-                <h4 class="text-muted">Cadastro de Cliente e Autorização de Retirada</h4>
+                <h4 class="text-muted" id="tituloPagina">Cadastro de Cliente e Autorização de Retirada</h4>
+            </div>
+
+            <div id="telaSucesso" class="hidden">
+                <i class="fas fa-check-circle check-icon"></i>
+                <h2 class="text-success fw-bold">Cadastro Recebido!</h2>
+                <p class="fs-5 text-muted mt-3 mb-4">Seus dados foram enviados com segurança para a loja.</p>
+                <div id="msgSucessoEmail" class="alert alert-info d-inline-block px-4">
+                    <i class="fas fa-envelope"></i> Enviamos a minuta para o seu e-mail. Por favor, acesse e assine.
+                </div>
+                <div id="msgSucessoBalcao" class="alert alert-warning d-inline-block px-4 hidden">
+                    <i class="fas fa-store"></i> Como você não cadastrou e-mail, dirija-se ao balcão da loja para assinar seu contrato.
+                </div>
+                <br><br>
+                <button class="btn btn-outline-secondary" onclick="window.location.reload();">Fazer um novo cadastro</button>
             </div>
 
             <form id="cadastroForm" autocomplete="off">
@@ -66,6 +85,7 @@
                     <div class="col-md-6">
                         <label for="cpf" class="form-label">CPF <span class="required-asterisk">*</span></label>
                         <input type="text" class="form-control" id="cpf" placeholder="000.000.000-00" required>
+                        <div class="invalid-feedback">CPF inválido. Verifique a numeração.</div>
                     </div>
                     <div class="col-md-6">
                         <label for="rg" class="form-label">RG</label>
@@ -79,8 +99,8 @@
                     <div class="col-md-4">
                         <label for="nascimento" class="form-label">Data de Nascimento <span class="required-asterisk">*</span></label>
                         <input type="date" class="form-control" id="nascimento" required>
-                        <div class="invalid-feedback">
-                            <strong>Atenção:</strong> De acordo com o Código Civil (Lei 10.406/2002), o cadastro para compras faturadas e retirada de mercadorias é restrito a maiores de 18 anos.
+                        <div class="invalid-feedback" id="erroIdade">
+                            Obrigatório ter mais de 18 anos (Código Civil).
                         </div>
                     </div>
 
@@ -102,25 +122,30 @@
                     </div>
 
                     <div id="alertaSemEmail" class="alert alert-warning mt-2 hidden" role="alert">
-                        <i class="fas fa-info-circle"></i> <strong>Atenção:</strong> Como você não forneceu um e-mail, seu cadastro e a autorização de terceiros só serão ativados após você assinar o documento pessoalmente no balcão da loja.
+                        <i class="fas fa-info-circle"></i> <strong>Atenção:</strong> Como você não forneceu um e-mail, seu cadastro só será ativado após você assinar no balcão da loja.
                     </div>
                 </div>
 
                 <h5 class="form-section-title">2. Endereço</h5>
                 <div class="row g-3">
-                    <div class="col-md-4">
+                    <div class="col-md-3">
                         <label for="cep" class="form-label">CEP <span class="required-asterisk">*</span></label>
                         <input type="text" class="form-control" id="cep" placeholder="00000-000" required>
-                        <small id="cep-status" class="text-primary"></small>
                     </div>
-                    <div class="col-md-8">
+                    <div class="col-md-7">
                         <label for="rua" class="form-label">Rua / Avenida <span class="required-asterisk">*</span></label>
                         <input type="text" class="form-control" id="rua" required>
                     </div>
-                    <div class="col-md-4">
+                    <div class="col-md-2">
                         <label for="numero" class="form-label">Número <span class="required-asterisk">*</span></label>
                         <input type="text" class="form-control" id="numero" required>
                     </div>
+
+                    <div class="col-md-4">
+                        <label for="complemento" class="form-label">Complemento</label>
+                        <input type="text" class="form-control" id="complemento" placeholder="Apto, Bloco, etc.">
+                    </div>
+
                     <div class="col-md-4">
                         <label for="bairro" class="form-label">Bairro <span class="required-asterisk">*</span></label>
                         <input type="text" class="form-control" id="bairro" required>
@@ -132,7 +157,6 @@
                 </div>
 
                 <h5 class="form-section-title">3. Autorização de Retirada por Terceiros (Opcional)</h5>
-                <p class="text-muted small">Preencha apenas se outra pessoa for retirar a mercadoria na loja.</p>
                 <div class="row g-3">
                     <div class="col-md-12">
                         <label for="nomeAuth" class="form-label">Nome da Pessoa Autorizada</label>
@@ -156,8 +180,12 @@
                     </label>
                 </div>
 
+                <div id="alertaErroFormulario" class="alert alert-danger hidden fw-bold text-center" role="alert">
+                    <i class="fas fa-exclamation-triangle"></i> Verifique os campos em vermelho antes de enviar.
+                </div>
+
                 <div class="d-grid">
-                    <button type="submit" class="btn btn-primary btn-lg" id="btnEnviar">
+                    <button type="button" class="btn btn-primary btn-lg" id="btnEnviar">
                         <i class="fas fa-paper-plane"></i> Enviar Cadastro
                     </button>
                 </div>
@@ -169,70 +197,31 @@
     <script src="https://unpkg.com/imask"></script>
     
     <script>
-        // SEU LINK DO GOOGLE APPS SCRIPT
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxSXMsBiIs1oeRKg8kpxM4RV9wg1KrlQDLnDjtVabAROTvMOpHLP6P0na7yZ3gKs1kRDg/exec";
 
-        // MÁSCARAS E POPUP
+        // MÁSCARAS
         IMask(document.getElementById('cpf'), { mask: '000.000.000-00' });
         IMask(document.getElementById('cpfAuth'), { mask: '000.000.000-00' });
         IMask(document.getElementById('cep'), { mask: '00000-000' });
 
         function abrirPoliticaPopup() {
-            const width = 800; const height = 600;
-            const left = (window.screen.width - width) / 2;
-            const top = (window.screen.height - height) / 2;
-            window.open('politica.html', 'PoliticaPopup', `width=${width},height=${height},top=${top},left=${left}`);
+            window.open('politica.html', 'PoliticaPopup', 'width=800,height=600,top=100,left=100');
         }
 
-        // LÓGICA DO CHECKBOX SEM E-MAIL
+        // SEM E-MAIL E LOJA (Mantido o código anterior que já funcionava)
         const checkSemEmail = document.getElementById('checkSemEmail');
-        const boxEmail1 = document.getElementById('boxEmail1');
-        const boxEmail2 = document.getElementById('boxEmail2');
-        const alertaSemEmail = document.getElementById('alertaSemEmail');
-        const inputEmail = document.getElementById('email');
-        const inputEmailConfirm = document.getElementById('emailConfirm');
-
         checkSemEmail.addEventListener('change', function() {
-            if (this.checked) {
-                boxEmail1.classList.add('hidden'); boxEmail2.classList.add('hidden');
-                alertaSemEmail.classList.remove('hidden');
-                inputEmail.required = false; inputEmailConfirm.required = false;
-            } else {
-                boxEmail1.classList.remove('hidden'); boxEmail2.classList.remove('hidden');
-                alertaSemEmail.classList.add('hidden');
-                inputEmail.required = true; inputEmailConfirm.required = true;
-            }
+            document.getElementById('boxEmail1').classList.toggle('hidden');
+            document.getElementById('boxEmail2').classList.toggle('hidden');
+            document.getElementById('alertaSemEmail').classList.toggle('hidden');
+            document.getElementById('email').required = !this.checked;
+            document.getElementById('emailConfirm').required = !this.checked;
         });
 
-        // ==========================================
-        // NOVO: VALIDAÇÃO DE IDADE (Maior de 18 anos)
-        // ==========================================
-        const inputNascimento = document.getElementById('nascimento');
-        inputNascimento.addEventListener('change', function() {
-            const dataEscolhida = new Date(this.value);
-            const hoje = new Date();
-            let idade = hoje.getFullYear() - dataEscolhida.getFullYear();
-            const mes = hoje.getMonth() - dataEscolhida.getMonth();
-            if (mes < 0 || (mes === 0 && hoje.getDate() < dataEscolhida.getDate())) {
-                idade--;
-            }
-
-            if (idade < 18) {
-                this.classList.add('is-invalid');
-                document.getElementById('btnEnviar').disabled = true; // Bloqueia o envio
-            } else {
-                this.classList.remove('is-invalid');
-                document.getElementById('btnEnviar').disabled = false; // Libera o envio
-            }
-        });
-
-        // CEP AUTOMÁTICO
         document.getElementById('cep').addEventListener('blur', function() {
             let cep = this.value.replace(/\D/g, ''); 
             if (cep.length === 8) {
-                fetch(`https://viacep.com.br/ws/${cep}/json/`)
-                .then(r => r.json())
-                .then(data => {
+                fetch(`https://viacep.com.br/ws/${cep}/json/`).then(r => r.json()).then(data => {
                     if(!data.erro) {
                         document.getElementById('rua').value = data.logradouro;
                         document.getElementById('bairro').value = data.bairro;
@@ -243,51 +232,124 @@
             }
         });
 
-        // ==========================================
-        // NOVO: VERIFICAÇÃO INTELIGENTE DE LOJA (Blindada)
-        // ==========================================
         const urlParams = new URLSearchParams(window.location.search);
         let lojaUrl = urlParams.get('loja');
-        const selectLoja = document.getElementById('selectLoja');
-        const boxSelecaoLoja = document.getElementById('boxSelecaoLoja');
-
-        // Lista das 9 Lojas Oficiais da Tamandaré Tintas
         const lojasValidas = ["morada", "visconde", "paula-leite", "conceicao", "maria-jose", "elias-fausto", "salto", "vinhedo", "itu"];
-
-        // Se a loja na URL NÃO estiver na lista oficial (ex: digitou "gemini") ou estiver vazia
         if (!lojasValidas.includes(lojaUrl)) {
-            boxSelecaoLoja.classList.remove('hidden'); // Mostra a caixa de seleção
-            selectLoja.required = true; // Obriga o cliente a escolher
-            lojaUrl = null; // Apaga a loja falsa da memória
+            document.getElementById('boxSelecaoLoja').classList.remove('hidden');
+            document.getElementById('selectLoja').required = true;
+            lojaUrl = null; 
         }
 
-        // ENVIO DOS DADOS
-        document.getElementById('cadastroForm').addEventListener('submit', function(e) {
-            e.preventDefault(); 
+        // ==========================================
+        // VALIDAÇÕES COMPLETAS (CPF E IDADE)
+        // ==========================================
+        function validaCPF(strCPF) {
+            strCPF = strCPF.replace(/\D/g, '');
+            if (strCPF.length !== 11 || /^(\d)\1{10}$/.test(strCPF)) return false;
+            let soma = 0, resto;
+            for (let i = 1; i <= 9; i++) soma += parseInt(strCPF.substring(i - 1, i)) * (11 - i);
+            resto = (soma * 10) % 11;
+            if ((resto === 10) || (resto === 11)) resto = 0;
+            if (resto !== parseInt(strCPF.substring(9, 10))) return false;
+            soma = 0;
+            for (let i = 1; i <= 10; i++) soma += parseInt(strCPF.substring(i - 1, i)) * (12 - i);
+            resto = (soma * 10) % 11;
+            if ((resto === 10) || (resto === 11)) resto = 0;
+            if (resto !== parseInt(strCPF.substring(10, 11))) return false;
+            return true;
+        }
+
+        function validaIdade() {
+            const dataInput = document.getElementById('nascimento').value;
+            if(!dataInput) return false;
+            const dataNasc = new Date(dataInput);
+            const hoje = new Date();
+            let idade = hoje.getFullYear() - dataNasc.getFullYear();
+            const m = hoje.getMonth() - dataNasc.getMonth();
+            if (m < 0 || (m === 0 && hoje.getDate() < dataNasc.getDate())) idade--;
+            return idade >= 18;
+        }
+
+        function verificaEmailsIguais() {
+            if (checkSemEmail.checked) return true;
+            return document.getElementById('email').value === document.getElementById('emailConfirm').value;
+        }
+
+        // ==========================================
+        // ENVIO DO FORMULÁRIO COM FEEDBACK E TELA DE SUCESSO
+        // ==========================================
+        document.getElementById('btnEnviar').addEventListener('click', function() {
             
+            // 1. LIMPA ERROS ANTERIORES
+            document.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+            document.getElementById('alertaErroFormulario').classList.add('hidden');
+            let temErro = false;
+
+            // 2. CHECK DE CAMPOS OBRIGATÓRIOS DO HTML
+            const form = document.getElementById('cadastroForm');
+            if (!form.checkValidity()) {
+                temErro = true;
+                form.reportValidity();
+            }
+
+            // 3. CHECK DE CPF
+            const inputCpf = document.getElementById('cpf');
+            if (!validaCPF(inputCpf.value)) {
+                inputCpf.classList.add('is-invalid');
+                temErro = true;
+            }
+
+            // 4. CHECK DE IDADE
+            const inputNascimento = document.getElementById('nascimento');
+            if (!validaIdade()) {
+                inputNascimento.classList.add('is-invalid');
+                temErro = true;
+            }
+
+            // 5. CHECK DE E-MAIL
+            const inputEmailConfirm = document.getElementById('emailConfirm');
+            if (!verificaEmailsIguais()) {
+                inputEmailConfirm.classList.add('is-invalid');
+                temErro = true;
+            }
+
+            // SE TIVER ERRO, PARA TUDO E AVISA O USUÁRIO
+            if (temErro) {
+                document.getElementById('alertaErroFormulario').classList.remove('hidden');
+                document.getElementById('alertaErroFormulario').scrollIntoView({ behavior: 'smooth', block: 'center' });
+                return; // Bloqueia o envio
+            }
+
+            // SE ESTIVER TUDO CERTO, INICIA O ENVIO
             const btn = document.getElementById('btnEnviar');
-            btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Processando...';
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Enviando com segurança...';
+            btn.classList.add('btn-success');
+            btn.classList.remove('btn-primary');
             btn.disabled = true;
 
-            // Define a loja final: Pega da URL validada ou da seleção manual
-            const lojaFinal = lojaUrl || selectLoja.value;
+            // JUNTA O NÚMERO COM O COMPLEMENTO
+            const numOriginal = document.getElementById('numero').value;
+            const complOriginal = document.getElementById('complemento').value;
+            const numeroFinal = complOriginal ? numOriginal + " - " + complOriginal : numOriginal;
+
+            const lojaFinal = lojaUrl || document.getElementById('selectLoja').value;
 
             fetch('https://api.ipify.org?format=json')
             .then(res => res.json())
             .then(ipData => {
-                
                 const pacote = {
                     loja: lojaFinal,
                     semEmail: checkSemEmail.checked,
                     ip: ipData.ip,
-                    cpf: document.getElementById('cpf').value,
+                    cpf: inputCpf.value,
                     rg: document.getElementById('rg').value,
                     nome: document.getElementById('nome').value,
-                    nascimento: document.getElementById('nascimento').value,
-                    email: inputEmail.value,
+                    nascimento: inputNascimento.value,
+                    email: document.getElementById('email').value,
                     cep: document.getElementById('cep').value,
                     rua: document.getElementById('rua').value,
-                    numero: document.getElementById('numero').value,
+                    numero: numeroFinal, // Enviando os dois juntos aqui
                     bairro: document.getElementById('bairro').value,
                     cidade: document.getElementById('cidade').value,
                     nomeAuth: document.getElementById('nomeAuth').value,
@@ -302,11 +364,21 @@
                 })
                 .then(response => response.json())
                 .then(data => {
-                    alert("SUCESSO! Cadastro recebido pela loja.");
-                    window.location.reload(); 
+                    // SUCESSO! ESCONDE O FORMULÁRIO E MOSTRA A TELA DE SUCESSO
+                    document.getElementById('cadastroForm').classList.add('hidden');
+                    document.getElementById('tituloPagina').classList.add('hidden');
+                    document.getElementById('telaSucesso').classList.remove('hidden');
+
+                    // Mostra mensagem diferente se foi balcão ou e-mail
+                    if (checkSemEmail.checked) {
+                        document.getElementById('msgSucessoBalcao').classList.remove('hidden');
+                        document.getElementById('msgSucessoEmail').classList.add('hidden');
+                    }
+
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
                 })
                 .catch(error => {
-                    alert("Ocorreu um erro ao enviar. Tente novamente.");
+                    alert("Ocorreu um erro na conexão. Tente novamente.");
                     btn.innerHTML = '<i class="fas fa-paper-plane"></i> Enviar Cadastro';
                     btn.disabled = false;
                 });
