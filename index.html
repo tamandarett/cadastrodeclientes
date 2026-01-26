@@ -32,10 +32,40 @@
         .logo-header { max-height: 80px; width: auto; }
         .hidden { display: none !important; }
         
-        /* ESTILO DO CHECKBOX DOS TERMOS (VERMELHO) */
+        /* CONTAINER DOS TERMOS (LIMPO, SEM FUNDO) */
+        .box-termos {
+            margin-bottom: 20px;
+            display: flex; 
+            align-items: center; /* Alinha o check com o texto */
+        }
+
+        /* O QUADRADINHO VERMELHO (DESTAQUE MÁXIMO) */
         #lgpdCheck {
-            accent-color: #dc3545; /* Vermelho Tamandaré */
-            width: 18px; height: 18px; margin-top: 4px; cursor: pointer;
+            accent-color: #dc3545; /* Vermelho quando marcado */
+            width: 22px;  /* Maior para facilitar o clique */
+            height: 22px; 
+            margin-right: 12px;
+            cursor: pointer;
+            
+            /* TRUQUE DA BORDA VERMELHA */
+            outline: 2px solid #dc3545; /* Borda vermelha forte */
+            outline-offset: -1px; /* Ajuste fino */
+            border-radius: 2px;
+            box-shadow: 0 0 5px rgba(220, 53, 69, 0.4); /* Sombra avermelhada */
+            
+            /* Remove a aparência padrão cinza do navegador */
+            -webkit-appearance: none;
+            appearance: none;
+            border: 2px solid white; /* Fundo interno branco */
+            background-color: white;
+        }
+        
+        /* Quando marcado, fica vermelho sólido */
+        #lgpdCheck:checked {
+            background-color: #dc3545;
+            border-color: #dc3545;
+            /* Recria o 'check' branco padrão */
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3e%3cpath fill='none' stroke='%23fff' stroke-linecap='round' stroke-linejoin='round' stroke-width='3' d='M6 10l3 3l6-6'/%3e%3c/svg%3e");
         }
         
         /* ESTILO DA TELA DE SUCESSO */
@@ -193,9 +223,9 @@
                 </div>
 
                 <h5 class="form-section-title">4. Segurança e Privacidade</h5>
-                <div class="form-check mb-4">
+                <div class="box-termos">
                     <input class="form-check-input" type="checkbox" id="lgpdCheck" required>
-                    <label class="form-check-label" for="lgpdCheck">
+                    <label class="form-check-label ps-1 text-dark" for="lgpdCheck">
                         Eu declaro que li e aceito as <a href="#" onclick="abrirPoliticaPopup(); return false;" class="text-primary text-decoration-underline">Políticas da Loja e Termos de Retirada</a>. Autorizo o uso dos dados para fins de cadastro e faturamento.
                     </label>
                 </div>
@@ -242,7 +272,7 @@
             modoPJ = isPJ;
             inputDoc.value = "";
             inputRg.value = "";
-            inputNascimento.value = ""; // Limpa data ao trocar
+            inputNascimento.value = ""; 
             maskDocPrincipal.destroy(); 
 
             if (isPJ) {
@@ -477,8 +507,6 @@
             // TRATAMENTO DA DATA (PJ OPCIONAL)
             let nascimentoEnviado = inputNascimento.value;
             if(modoPJ && !nascimentoEnviado) {
-                // SE O PJ NÃO PREENCHEU A DATA (POIS É OPCIONAL),
-                // ENVIAMOS A DATA DE HOJE PARA O ROBÔ NÃO DAR ERRO AO GERAR O PDF.
                 nascimentoEnviado = new Date().toISOString().split('T')[0];
             }
 
@@ -490,9 +518,9 @@
                     semEmail: checkSemEmail.checked,
                     ip: ipData.ip,
                     cpf: inputDoc.value, 
-                    rg: rgEnviado, // Envia o RG ou "ISENTO"
+                    rg: rgEnviado, 
                     nome: document.getElementById('nome').value, 
-                    nascimento: nascimentoEnviado, // Envia Data real ou Data "Tampão" (PJ Vazio)
+                    nascimento: nascimentoEnviado, 
                     email: document.getElementById('email').value,
                     cep: document.getElementById('cep').value,
                     rua: document.getElementById('rua').value,
