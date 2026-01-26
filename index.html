@@ -32,10 +32,10 @@
         .logo-header { max-height: 80px; width: auto; }
         .hidden { display: none !important; }
         
-        /* DESTAQUE PARA OS TERMOS LGPD */
-        .box-termos {
-            background-color: #e7f1ff; border: 1px solid #b6d4fe; 
-            padding: 15px; border-radius: 8px; margin-bottom: 20px;
+        /* ESTILO DO CHECKBOX DOS TERMOS (VERMELHO) */
+        #lgpdCheck {
+            accent-color: #dc3545; /* Vermelho Tamandaré */
+            width: 18px; height: 18px; margin-top: 4px; cursor: pointer;
         }
         
         /* ESTILO DA TELA DE SUCESSO */
@@ -112,14 +112,14 @@
                     </div>
                     
                     <div class="col-md-4" id="boxNascimento">
-                        <label for="nascimento" class="form-label">Data de Nascimento <span class="required-asterisk">*</span></label>
+                        <label for="nascimento" class="form-label" id="labelNascimento">Data de Nascimento <span class="required-asterisk">*</span></label>
                         <input type="date" class="form-control" id="nascimento" required>
                         <div class="invalid-feedback" id="erroIdade">
                             Obrigatório ter mais de 18 anos.
                         </div>
                     </div>
 
-                    <div class="col-md-12 mt-3">
+                    <div class="col-md-12 mt-3" id="boxSwitchSemEmail">
                         <div class="form-check form-switch">
                             <input class="form-check-input" type="checkbox" id="checkSemEmail">
                             <label class="form-check-label fw-bold text-danger" for="checkSemEmail">Não possuo e-mail (Assinatura Presencial)</label>
@@ -193,9 +193,9 @@
                 </div>
 
                 <h5 class="form-section-title">4. Segurança e Privacidade</h5>
-                <div class="form-check box-termos">
-                    <input class="form-check-input" type="checkbox" id="lgpdCheck" required style="transform: scale(1.3); margin-top: 5px;">
-                    <label class="form-check-label ps-2 fw-bold text-dark" for="lgpdCheck">
+                <div class="form-check mb-4">
+                    <input class="form-check-input" type="checkbox" id="lgpdCheck" required>
+                    <label class="form-check-label" for="lgpdCheck">
                         Eu declaro que li e aceito as <a href="#" onclick="abrirPoliticaPopup(); return false;" class="text-primary text-decoration-underline">Políticas da Loja e Termos de Retirada</a>. Autorizo o uso dos dados para fins de cadastro e faturamento.
                     </label>
                 </div>
@@ -217,7 +217,6 @@
     <script src="https://unpkg.com/imask"></script>
     
     <script>
-        // SEU LINK DO ROBO (NÃO PRECISA MUDAR)
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxSXMsBiIs1oeRKg8kpxM4RV9wg1KrlQDLnDjtVabAROTvMOpHLP6P0na7yZ3gKs1kRDg/exec";
 
         // CONFIGURAÇÕES INICIAIS
@@ -232,44 +231,64 @@
         const labelDoc = document.getElementById('labelDocPrincipal');
         const labelRg = document.getElementById('labelDocSecundario');
         const labelNome = document.getElementById('labelNome');
+        const labelNascimento = document.getElementById('labelNascimento');
         const inputRg = document.getElementById('rg');
         const inputDoc = document.getElementById('cpf');
-        const boxNascimento = document.getElementById('boxNascimento'); 
+        const inputNascimento = document.getElementById('nascimento');
+        const boxSwitchSemEmail = document.getElementById('boxSwitchSemEmail');
+        const checkSemEmail = document.getElementById('checkSemEmail');
 
         function mudarModo(isPJ) {
             modoPJ = isPJ;
             inputDoc.value = "";
             inputRg.value = "";
-            maskDocPrincipal.destroy(); // Remove mascara anterior
+            inputNascimento.value = ""; // Limpa data ao trocar
+            maskDocPrincipal.destroy(); 
 
             if (isPJ) {
+                // MODO PJ
                 labelDoc.innerHTML = 'CNPJ <span class="required-asterisk">*</span>';
                 labelRg.innerHTML = 'Inscrição Estadual (IE)';
                 labelNome.innerHTML = 'Razão Social <span class="required-asterisk">*</span>';
+                
+                // DATA DE FUNDAÇÃO (OPCIONAL)
+                labelNascimento.innerHTML = 'Data de Fundação (Opcional)';
+                inputNascimento.required = false; 
+
                 inputDoc.placeholder = "00.000.000/0000-00";
                 inputRg.placeholder = "Isento ou Número";
                 maskDocPrincipal = IMask(inputDoc, { mask: '00.000.000/0000-00' });
-                // Data de nascimento vira Data de Fundação para PJ
-                document.querySelector('label[for="nascimento"]').innerHTML = 'Data de Fundação <span class="required-asterisk">*</span>';
+
+                // ESCONDER OPÇÃO "SEM EMAIL" (PJ OBRIGATÓRIO TER EMAIL)
+                boxSwitchSemEmail.classList.add('hidden');
+                checkSemEmail.checked = false; // Garante que está desmarcado
+                checkSemEmail.dispatchEvent(new Event('change')); 
+                
             } else {
+                // MODO PF
                 labelDoc.innerHTML = 'CPF <span class="required-asterisk">*</span>';
                 labelRg.innerHTML = 'RG';
                 labelNome.innerHTML = 'Nome Completo <span class="required-asterisk">*</span>';
+                
+                // DATA DE NASCIMENTO (OBRIGATÓRIO)
+                labelNascimento.innerHTML = 'Data de Nascimento <span class="required-asterisk">*</span>';
+                inputNascimento.required = true;
+
                 inputDoc.placeholder = "000.000.000-00";
                 inputRg.placeholder = "Opcional";
                 maskDocPrincipal = IMask(inputDoc, { mask: '000.000.000-00' });
-                document.querySelector('label[for="nascimento"]').innerHTML = 'Data de Nascimento <span class="required-asterisk">*</span>';
+                
+                // MOSTRAR OPÇÃO SEM EMAIL
+                boxSwitchSemEmail.classList.remove('hidden');
             }
         }
 
         radioPF.addEventListener('change', () => mudarModo(false));
         radioPJ.addEventListener('change', () => mudarModo(true));
 
-        // CONTROLE DA DATA LIMITE (Não pode passado + Checkbox Indeterminado)
+        // CONTROLE DA DATA LIMITE
         const inputDataLimite = document.getElementById('dataLimite');
         const checkIndeterminado = document.getElementById('checkIndeterminado');
-        
-        // Define o mínimo como hoje
         const hojeISO = new Date().toISOString().split('T')[0];
         inputDataLimite.setAttribute('min', hojeISO);
 
@@ -282,13 +301,10 @@
             }
         });
 
-        // POPUP POLÍTICA
         function abrirPoliticaPopup() {
             window.open('politica.html', 'PoliticaPopup', 'width=800,height=600,top=100,left=100');
         }
 
-        // SEM E-MAIL E LOJA
-        const checkSemEmail = document.getElementById('checkSemEmail');
         checkSemEmail.addEventListener('change', function() {
             document.getElementById('boxEmail1').classList.toggle('hidden');
             document.getElementById('boxEmail2').classList.toggle('hidden');
@@ -320,9 +336,6 @@
             lojaUrl = null; 
         }
 
-        // ==========================================
-        // VALIDADORES MATEMÁTICOS (CPF E CNPJ)
-        // ==========================================
         function validaCPF(strCPF) {
             strCPF = strCPF.replace(/\D/g, '');
             if (strCPF.length !== 11 || /^(\d)\1{10}$/.test(strCPF)) return false;
@@ -369,9 +382,7 @@
         }
 
         function validaIdade() {
-            // Se for PJ, não validamos maioridade (pois é data de fundação)
-            if(modoPJ) return true;
-            
+            if(modoPJ) return true; // PJ não valida idade
             const dataInput = document.getElementById('nascimento').value;
             if(!dataInput) return false;
             const dataNasc = new Date(dataInput);
@@ -396,14 +407,12 @@
             document.getElementById('alertaErroFormulario').classList.add('hidden');
             let temErro = false;
 
-            // VALIDAÇÕES BÁSICAS
             const form = document.getElementById('cadastroForm');
             if (!form.checkValidity()) {
                 temErro = true;
                 form.reportValidity();
             }
 
-            // VALIDAÇÃO PRINCIPAL (CPF OU CNPJ)
             const inputDoc = document.getElementById('cpf');
             let docValido = false;
             if (modoPJ) {
@@ -417,7 +426,6 @@
                 temErro = true;
             }
 
-            // VALIDAÇÃO CPF AUTORIZADO (NOVO)
             const inputCpfAuth = document.getElementById('cpfAuth');
             if (inputCpfAuth.value.length > 0) {
                 if(!validaCPF(inputCpfAuth.value)) {
@@ -426,14 +434,12 @@
                 }
             }
 
-            // VALIDAÇÃO IDADE (Apenas PF)
             const inputNascimento = document.getElementById('nascimento');
             if (!validaIdade()) {
                 inputNascimento.classList.add('is-invalid');
                 temErro = true;
             }
 
-            // E-MAIL
             const inputEmailConfirm = document.getElementById('emailConfirm');
             if (!verificaEmailsIguais()) {
                 inputEmailConfirm.classList.add('is-invalid');
@@ -446,7 +452,6 @@
                 return; 
             }
 
-            // PREPARAÇÃO PARA ENVIO
             const btn = document.getElementById('btnEnviar');
             btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Enviando com segurança...';
             btn.classList.add('btn-success');
@@ -458,10 +463,23 @@
             const numeroFinal = complOriginal ? numOriginal + " - " + complOriginal : numOriginal;
             const lojaFinal = lojaUrl || document.getElementById('selectLoja').value;
             
-            // TRATA A DATA LIMITE
             let dataLimiteFinal = document.getElementById('dataLimite').value;
             if(checkIndeterminado.checked) {
                 dataLimiteFinal = "Tempo Indeterminado";
+            }
+
+            // TRATAMENTO INTELIGENTE DE DADOS PJ
+            let rgEnviado = document.getElementById('rg').value;
+            if(modoPJ && !rgEnviado) {
+                rgEnviado = "ISENTO"; // Auto-preenche Isento
+            }
+            
+            // TRATAMENTO DA DATA (PJ OPCIONAL)
+            let nascimentoEnviado = inputNascimento.value;
+            if(modoPJ && !nascimentoEnviado) {
+                // SE O PJ NÃO PREENCHEU A DATA (POIS É OPCIONAL),
+                // ENVIAMOS A DATA DE HOJE PARA O ROBÔ NÃO DAR ERRO AO GERAR O PDF.
+                nascimentoEnviado = new Date().toISOString().split('T')[0];
             }
 
             fetch('https://api.ipify.org?format=json')
@@ -471,10 +489,10 @@
                     loja: lojaFinal,
                     semEmail: checkSemEmail.checked,
                     ip: ipData.ip,
-                    cpf: inputDoc.value, // Envia CNPJ ou CPF aqui (o backend entende)
-                    rg: document.getElementById('rg').value, // Envia IE ou RG aqui
-                    nome: document.getElementById('nome').value, // Envia Razão ou Nome
-                    nascimento: inputNascimento.value,
+                    cpf: inputDoc.value, 
+                    rg: rgEnviado, // Envia o RG ou "ISENTO"
+                    nome: document.getElementById('nome').value, 
+                    nascimento: nascimentoEnviado, // Envia Data real ou Data "Tampão" (PJ Vazio)
                     email: document.getElementById('email').value,
                     cep: document.getElementById('cep').value,
                     rua: document.getElementById('rua').value,
@@ -483,7 +501,7 @@
                     cidade: document.getElementById('cidade').value,
                     nomeAuth: document.getElementById('nomeAuth').value,
                     cpfAuth: inputCpfAuth.value,
-                    dataLimite: dataLimiteFinal // Agora envia "Indeterminado" ou a data
+                    dataLimite: dataLimiteFinal
                 };
 
                 fetch(SCRIPT_URL, {
