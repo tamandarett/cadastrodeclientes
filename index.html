@@ -36,39 +36,31 @@
         .box-termos {
             margin-bottom: 20px;
             display: flex; 
-            align-items: center; /* Alinha o check com o texto */
+            align-items: center; 
         }
 
         /* O QUADRADINHO VERMELHO (DESTAQUE MÁXIMO) */
         #lgpdCheck {
-            accent-color: #dc3545; /* Vermelho quando marcado */
-            width: 22px;  /* Maior para facilitar o clique */
-            height: 22px; 
+            accent-color: #dc3545; 
+            width: 22px; height: 22px; 
             margin-right: 12px;
             cursor: pointer;
-            
-            /* TRUQUE DA BORDA VERMELHA */
-            outline: 2px solid #dc3545; /* Borda vermelha forte */
-            outline-offset: -1px; /* Ajuste fino */
+            outline: 2px solid #dc3545; 
+            outline-offset: -1px; 
             border-radius: 2px;
-            box-shadow: 0 0 5px rgba(220, 53, 69, 0.4); /* Sombra avermelhada */
-            
-            /* Remove a aparência padrão cinza do navegador */
+            box-shadow: 0 0 5px rgba(220, 53, 69, 0.4); 
             -webkit-appearance: none;
             appearance: none;
-            border: 2px solid white; /* Fundo interno branco */
+            border: 2px solid white; 
             background-color: white;
         }
         
-        /* Quando marcado, fica vermelho sólido */
         #lgpdCheck:checked {
             background-color: #dc3545;
             border-color: #dc3545;
-            /* Recria o 'check' branco padrão */
             background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3e%3cpath fill='none' stroke='%23fff' stroke-linecap='round' stroke-linejoin='round' stroke-width='3' d='M6 10l3 3l6-6'/%3e%3c/svg%3e");
         }
         
-        /* ESTILO DA TELA DE SUCESSO */
         #telaSucesso { text-align: center; padding: 40px 20px; }
         .check-icon { font-size: 80px; color: #198754; margin-bottom: 20px; }
     </style>
@@ -255,7 +247,7 @@
         let maskCpfAuth = IMask(document.getElementById('cpfAuth'), { mask: '000.000.000-00' });
         IMask(document.getElementById('cep'), { mask: '00000-000' });
 
-        // LÓGICA DE TROCA PF / PJ
+        // ELEMENTOS DOM
         const radioPF = document.getElementById('radioPF');
         const radioPJ = document.getElementById('radioPJ');
         const labelDoc = document.getElementById('labelDocPrincipal');
@@ -267,7 +259,30 @@
         const inputNascimento = document.getElementById('nascimento');
         const boxSwitchSemEmail = document.getElementById('boxSwitchSemEmail');
         const checkSemEmail = document.getElementById('checkSemEmail');
+        const boxEmail1 = document.getElementById('boxEmail1');
+        const boxEmail2 = document.getElementById('boxEmail2');
+        const alertaSemEmail = document.getElementById('alertaSemEmail');
 
+        // FUNÇÃO CENTRAL PARA CONTROLAR O E-MAIL (CORREÇÃO DO BUG)
+        function atualizarInterfaceEmail() {
+            // Se estiver marcado "sem e-mail", esconde inputs e mostra alerta.
+            // Se não estiver marcado, mostra inputs e esconde alerta.
+            if (checkSemEmail.checked) {
+                boxEmail1.classList.add('hidden');
+                boxEmail2.classList.add('hidden');
+                alertaSemEmail.classList.remove('hidden');
+                document.getElementById('email').required = false;
+                document.getElementById('emailConfirm').required = false;
+            } else {
+                boxEmail1.classList.remove('hidden');
+                boxEmail2.classList.remove('hidden');
+                alertaSemEmail.classList.add('hidden');
+                document.getElementById('email').required = true;
+                document.getElementById('emailConfirm').required = true;
+            }
+        }
+
+        // LÓGICA DE TROCA PF / PJ
         function mudarModo(isPJ) {
             modoPJ = isPJ;
             inputDoc.value = "";
@@ -280,41 +295,40 @@
                 labelDoc.innerHTML = 'CNPJ <span class="required-asterisk">*</span>';
                 labelRg.innerHTML = 'Inscrição Estadual (IE)';
                 labelNome.innerHTML = 'Razão Social <span class="required-asterisk">*</span>';
-                
-                // DATA DE FUNDAÇÃO (OPCIONAL)
                 labelNascimento.innerHTML = 'Data de Fundação (Opcional)';
                 inputNascimento.required = false; 
-
                 inputDoc.placeholder = "00.000.000/0000-00";
                 inputRg.placeholder = "Isento ou Número";
                 maskDocPrincipal = IMask(inputDoc, { mask: '00.000.000/0000-00' });
 
-                // ESCONDER OPÇÃO "SEM EMAIL" (PJ OBRIGATÓRIO TER EMAIL)
-                boxSwitchSemEmail.classList.add('hidden');
-                checkSemEmail.checked = false; // Garante que está desmarcado
-                checkSemEmail.dispatchEvent(new Event('change')); 
-                
+                // FORÇAR E-MAIL OBRIGATÓRIO PARA PJ (CORREÇÃO)
+                boxSwitchSemEmail.classList.add('hidden'); // Esconde o botão de "sem e-mail"
+                checkSemEmail.checked = false; // Desmarca forçadamente
+                atualizarInterfaceEmail(); // Atualiza a tela imediatamente
+
             } else {
                 // MODO PF
                 labelDoc.innerHTML = 'CPF <span class="required-asterisk">*</span>';
                 labelRg.innerHTML = 'RG';
                 labelNome.innerHTML = 'Nome Completo <span class="required-asterisk">*</span>';
-                
-                // DATA DE NASCIMENTO (OBRIGATÓRIO)
                 labelNascimento.innerHTML = 'Data de Nascimento <span class="required-asterisk">*</span>';
                 inputNascimento.required = true;
-
                 inputDoc.placeholder = "000.000.000-00";
                 inputRg.placeholder = "Opcional";
                 maskDocPrincipal = IMask(inputDoc, { mask: '000.000.000-00' });
                 
-                // MOSTRAR OPÇÃO SEM EMAIL
+                // MOSTRAR OPÇÃO SEM EMAIL NOVAMENTE
                 boxSwitchSemEmail.classList.remove('hidden');
+                // Mantém o estado atual ou reseta, aqui optamos por atualizar a interface com o que estiver no check
+                atualizarInterfaceEmail();
             }
         }
 
         radioPF.addEventListener('change', () => mudarModo(false));
         radioPJ.addEventListener('change', () => mudarModo(true));
+        
+        // Listener do checkbox agora chama a função segura
+        checkSemEmail.addEventListener('change', atualizarInterfaceEmail);
 
         // CONTROLE DA DATA LIMITE
         const inputDataLimite = document.getElementById('dataLimite');
@@ -334,14 +348,6 @@
         function abrirPoliticaPopup() {
             window.open('politica.html', 'PoliticaPopup', 'width=800,height=600,top=100,left=100');
         }
-
-        checkSemEmail.addEventListener('change', function() {
-            document.getElementById('boxEmail1').classList.toggle('hidden');
-            document.getElementById('boxEmail2').classList.toggle('hidden');
-            document.getElementById('alertaSemEmail').classList.toggle('hidden');
-            document.getElementById('email').required = !this.checked;
-            document.getElementById('emailConfirm').required = !this.checked;
-        });
 
         document.getElementById('cep').addEventListener('blur', function() {
             let cep = this.value.replace(/\D/g, ''); 
@@ -501,7 +507,7 @@
             // TRATAMENTO INTELIGENTE DE DADOS PJ
             let rgEnviado = document.getElementById('rg').value;
             if(modoPJ && !rgEnviado) {
-                rgEnviado = "ISENTO"; // Auto-preenche Isento
+                rgEnviado = "ISENTO"; 
             }
             
             // TRATAMENTO DA DATA (PJ OPCIONAL)
