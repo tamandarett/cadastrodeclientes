@@ -32,7 +32,7 @@
         .logo-header { max-height: 80px; width: auto; }
         .hidden { display: none !important; }
         
-        /* CONTAINER DOS TERMOS (LIMPO, SEM FUNDO) */
+        /* CONTAINER DOS TERMOS */
         .box-termos {
             margin-bottom: 20px;
             display: flex; 
@@ -41,26 +41,32 @@
 
         /* O QUADRADINHO VERMELHO (DESTAQUE MÁXIMO) */
         #lgpdCheck {
-            accent-color: #dc3545; 
-            width: 22px; height: 22px; 
+            accent-color: #dc3545; /* Vermelho quando marcado */
+            width: 22px;  /* Maior para facilitar o clique */
+            height: 22px; 
             margin-right: 12px;
             cursor: pointer;
+            
+            /* TRUQUE DA BORDA VERMELHA */
             outline: 2px solid #dc3545; 
             outline-offset: -1px; 
             border-radius: 2px;
             box-shadow: 0 0 5px rgba(220, 53, 69, 0.4); 
+            
             -webkit-appearance: none;
             appearance: none;
             border: 2px solid white; 
             background-color: white;
         }
         
+        /* Quando marcado */
         #lgpdCheck:checked {
             background-color: #dc3545;
             border-color: #dc3545;
             background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3e%3cpath fill='none' stroke='%23fff' stroke-linecap='round' stroke-linejoin='round' stroke-width='3' d='M6 10l3 3l6-6'/%3e%3c/svg%3e");
         }
         
+        /* ESTILO DA TELA DE SUCESSO */
         #telaSucesso { text-align: center; padding: 40px 20px; }
         .check-icon { font-size: 80px; color: #198754; margin-bottom: 20px; }
     </style>
@@ -263,10 +269,8 @@
         const boxEmail2 = document.getElementById('boxEmail2');
         const alertaSemEmail = document.getElementById('alertaSemEmail');
 
-        // FUNÇÃO CENTRAL PARA CONTROLAR O E-MAIL (CORREÇÃO DO BUG)
+        // FUNÇÃO CENTRAL PARA CONTROLAR O E-MAIL
         function atualizarInterfaceEmail() {
-            // Se estiver marcado "sem e-mail", esconde inputs e mostra alerta.
-            // Se não estiver marcado, mostra inputs e esconde alerta.
             if (checkSemEmail.checked) {
                 boxEmail1.classList.add('hidden');
                 boxEmail2.classList.add('hidden');
@@ -282,7 +286,6 @@
             }
         }
 
-        // LÓGICA DE TROCA PF / PJ
         function mudarModo(isPJ) {
             modoPJ = isPJ;
             inputDoc.value = "";
@@ -301,10 +304,9 @@
                 inputRg.placeholder = "Isento ou Número";
                 maskDocPrincipal = IMask(inputDoc, { mask: '00.000.000/0000-00' });
 
-                // FORÇAR E-MAIL OBRIGATÓRIO PARA PJ (CORREÇÃO)
-                boxSwitchSemEmail.classList.add('hidden'); // Esconde o botão de "sem e-mail"
-                checkSemEmail.checked = false; // Desmarca forçadamente
-                atualizarInterfaceEmail(); // Atualiza a tela imediatamente
+                boxSwitchSemEmail.classList.add('hidden'); 
+                checkSemEmail.checked = false; 
+                atualizarInterfaceEmail(); 
 
             } else {
                 // MODO PF
@@ -317,17 +319,13 @@
                 inputRg.placeholder = "Opcional";
                 maskDocPrincipal = IMask(inputDoc, { mask: '000.000.000-00' });
                 
-                // MOSTRAR OPÇÃO SEM EMAIL NOVAMENTE
                 boxSwitchSemEmail.classList.remove('hidden');
-                // Mantém o estado atual ou reseta, aqui optamos por atualizar a interface com o que estiver no check
                 atualizarInterfaceEmail();
             }
         }
 
         radioPF.addEventListener('change', () => mudarModo(false));
         radioPJ.addEventListener('change', () => mudarModo(true));
-        
-        // Listener do checkbox agora chama a função segura
         checkSemEmail.addEventListener('change', atualizarInterfaceEmail);
 
         // CONTROLE DA DATA LIMITE
@@ -435,7 +433,7 @@
         }
 
         // ==========================================
-        // ENVIO DO FORMULÁRIO
+        // ENVIO DO FORMULÁRIO (BLINDADO COM TIMEOUT)
         // ==========================================
         document.getElementById('btnEnviar').addEventListener('click', function() {
             
@@ -504,25 +502,41 @@
                 dataLimiteFinal = "Tempo Indeterminado";
             }
 
-            // TRATAMENTO INTELIGENTE DE DADOS PJ
             let rgEnviado = document.getElementById('rg').value;
             if(modoPJ && !rgEnviado) {
                 rgEnviado = "ISENTO"; 
             }
             
-            // TRATAMENTO DA DATA (PJ OPCIONAL)
             let nascimentoEnviado = inputNascimento.value;
             if(modoPJ && !nascimentoEnviado) {
                 nascimentoEnviado = new Date().toISOString().split('T')[0];
             }
 
-            fetch('https://api.ipify.org?format=json')
-            .then(res => res.json())
-            .then(ipData => {
+            // =======================================================
+            // NOVA LÓGICA DE BLINDAGEM DO IP (4 SEGUNDOS TIMEOUT)
+            // =======================================================
+            const fetchIpComTimeout = () => {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 4000); // 4 Segundos
+
+                return fetch('https://api.ipify.org?format=json', { signal: controller.signal })
+                    .then(response => {
+                        clearTimeout(timeoutId);
+                        if(!response.ok) throw new Error("Erro na API");
+                        return response.json();
+                    })
+                    .then(data => data.ip)
+                    .catch(error => {
+                        console.warn("IP não obtido ou timeout:", error);
+                        return "Não Rastreado (Timeout/Erro)";
+                    });
+            };
+
+            fetchIpComTimeout().then(ipUsuario => {
                 const pacote = {
                     loja: lojaFinal,
                     semEmail: checkSemEmail.checked,
-                    ip: ipData.ip,
+                    ip: ipUsuario,
                     cpf: inputDoc.value, 
                     rg: rgEnviado, 
                     nome: document.getElementById('nome').value, 
@@ -538,6 +552,7 @@
                     dataLimite: dataLimiteFinal
                 };
 
+                // ENVIO PARA O GOOGLE APPS SCRIPT
                 fetch(SCRIPT_URL, {
                     method: 'POST',
                     body: JSON.stringify(pacote),
@@ -556,8 +571,11 @@
                     window.scrollTo({ top: 0, behavior: 'smooth' });
                 })
                 .catch(error => {
-                    alert("Ocorreu um erro na conexão. Tente novamente.");
+                    // DESTRAVAMENTO DO BOTÃO EM CASO DE ERRO NO ENVIO
+                    alert("Ocorreu um erro na conexão. Seus dados estão salvos, tente enviar novamente.");
                     btn.innerHTML = '<i class="fas fa-paper-plane"></i> Enviar Cadastro';
+                    btn.classList.add('btn-primary');
+                    btn.classList.remove('btn-success');
                     btn.disabled = false;
                 });
             });
